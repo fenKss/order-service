@@ -1,0 +1,144 @@
+replicaCount: 1
+
+orderService:
+  image:
+    repository: fenkss/order-app
+    tag: "latest"
+    pullPolicy: Always
+  type: NodePort
+  port: 80
+  develop:
+    enabled: false
+    pwd: "/hosthome/fenk/projects/k8s/k8s-php/order/app"
+  database: order
+  env:
+    - name: DATABASE_URL
+      key: ORDER_DATABASE_URL
+    - name: KAFKA_URL
+      key: KAFKA_URL
+billingService:
+  image:
+    repository: fenkss/billing-app
+    tag: "latest"
+    pullPolicy: Always
+  type: NodePort
+  port: 80
+  develop:
+    enabled: false
+    pwd: "/hosthome/fenk/projects/k8s/k8s-php/billing/app"
+  database: billing
+  env:
+    - name: DATABASE_URL
+      key: BILLING_DATABASE_URL
+    - name: KAFKA_URL
+      key: KAFKA_URL
+notificationService:
+  image:
+    repository: fenkss/notification-app
+    tag: "latest"
+    pullPolicy: Always
+  type: ClusterIP
+  port: 80
+  develop:
+    enabled: false
+    pwd: "/hosthome/fenk/projects/k8s/k8s-php/notification/app"
+  database: notifications
+  env:
+    - name: DATABASE_URL
+      key: NOTIFICATIONS_DATABASE_URL
+    - name: KAFKA_URL
+      key: KAFKA_URL
+
+authService:
+  image:
+    repository: fenkss/auth-app
+    tag: "latest"
+    pullPolicy: Always
+  type: ClusterIP
+  port: 80
+  develop:
+    enabled: false
+    pwd: "/hosthome/fenk/projects/k8s/k8s-php/auth/app"
+  database: auth
+  env:
+    - name: DATABASE_URL
+      key: AUTH_DATABASE_URL
+
+persistence:
+  accessMode: ReadWriteOnce
+  enabled: true
+  size: 5Gi
+  storageClass: standard
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: { }
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: { }
+
+tolerations: [ ]
+
+affinity: { }
+
+mysql:
+  fullnameOverride: "app-mysql"
+  auth:
+    password: "1"
+    rootPassword: "1"
+    username: "app"
+traefik:
+  providers:
+    kubernetesIngress:
+      enabled: false # Настраиваем маршруты только с помощью CRD (IngressRoute)
+  ports:
+    websecure:
+      expose: false # Выключаем https
+  logs:
+    access:
+      enabled: true
+    general:
+      level: DEBUG
+
+kafka:
+  fullnameOverride: "app-kafka"
+  zookeeper:
+#    nameOverride: "app-zookeeper"
+  autoCreateTopicsEnable: true
+  provisioning:
+    topics: [ 'order', 'notifications', 'billing' ]
+  auth:
+    sasl:
+      jaas:
+        clientPasswords: [
+          123
+        ]
+kafkaTopicCreator:
+  jobName: kafka-topic-creator
+  helmHook: post-install
+  kafka:
+    topics:
+      - name: order
+        replicationFactor: 1
+        partitions: 1
+      - name: notifications
+        replicationFactor: 1
+        partitions: 1
+      - name: billing
+        replicationFactor: 1
+        partitions: 1
+  zookeeper:
+    address: app-zookeeper:2181
+  imagePullSecrets:
+    - name: regcred

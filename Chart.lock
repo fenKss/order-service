@@ -1,0 +1,12 @@
+dependencies:
+- name: mysql
+  repository: https://charts.bitnami.com/bitnami
+  version: 8.8.23
+- name: kafka
+  repository: https://charts.bitnami.com/bitnami
+  version: 15.0.3
+- name: traefik
+  repository: https://helm.traefik.io/traefik
+  version: 10.1.2
+digest: sha256:aff4f96f3d0ae5576b778e6f5011aa41caa93fa03868fc32ab3ad451bb574d73
+generated: "2022-02-06T17:58:53.885746971+03:00"
